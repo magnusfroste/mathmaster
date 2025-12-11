@@ -17,6 +17,129 @@ import { DroppableZone } from './components/DroppableZone';
 import { triggerConfetti } from './components/Confetti';
 import { playSound } from './utils/sound';
 
+// Helper to count unique problems available for each operation
+const countUniqueProblems = (op: Operation): number => {
+  const uniqueSet = new Set<string>();
+
+  LEVELS.forEach(config => {
+    const level = config.level;
+    const rangeScale = (op === 'addition' || op === 'subtraction' || op === 'algebra') ? 1.5 : 1;
+    
+    // Default Ranges for Multiplication/Addition/Subtraction base logic
+    // Note: Algebra uses rangeA*1.5 for constant and rangeB*1.5 for answer (x)
+    const minA = Math.ceil(config.rangeA[0] * rangeScale);
+    const maxA = Math.ceil(config.rangeA[1] * rangeScale);
+    const minB = Math.ceil(config.rangeB[0] * rangeScale);
+    const maxB = Math.ceil(config.rangeB[1] * rangeScale);
+
+    if (op === 'multiplication') {
+      // Use raw ranges for multiplication as per generateProblems
+      for (let a = config.rangeA[0]; a <= config.rangeA[1]; a++) {
+        for (let b = config.rangeB[0]; b <= config.rangeB[1]; b++) {
+          uniqueSet.add(`${a}x${b}`);
+        }
+      }
+    } 
+    else if (op === 'addition') {
+      for (let a = minA; a <= maxA; a++) {
+        for (let b = minB; b <= maxB; b++) {
+          uniqueSet.add(`${a}+${b}`);
+        }
+      }
+    }
+    else if (op === 'subtraction') {
+      // factorA = answer + factorB
+      // answer from rangeA (scaled), factorB from rangeB (scaled)
+      for (let b = minB; b <= maxB; b++) {
+        for (let ans = minA; ans <= maxA; ans++) {
+           const a = ans + b;
+           uniqueSet.add(`${a}-${b}`);
+        }
+      }
+    }
+    else if (op === 'division') {
+      const divMin = Math.max(2, config.rangeB[0]);
+      const divMax = config.rangeB[1];
+      const quoMin = config.rangeA[0];
+      const quoMax = config.rangeA[1];
+      for (let d = divMin; d <= divMax; d++) {
+        for (let q = quoMin; q <= quoMax; q++) {
+          const a = q * d;
+          uniqueSet.add(`${a}/${d}`);
+        }
+      }
+    }
+    else if (op === 'percentage') {
+       let availablePercents: number[] = [];
+       if (level <= 3) availablePercents = [50, 100];
+       else if (level <= 6) availablePercents = [10, 20, 25, 50, 100];
+       else availablePercents = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+       
+       availablePercents.forEach(percent => {
+          let step = 10;
+          if (percent === 50) step = 2;
+          if (percent === 25 || percent === 75) step = 4;
+          if (percent === 5 || percent === 15) step = 20;
+          if (percent === 100) step = 1;
+          
+          const minBase = step;
+          const maxBase = Math.max(step * 5, level * 20);
+          const steps = Math.floor((maxBase - minBase) / step) + 1;
+          
+          for (let i = 0; i < steps; i++) {
+             const base = minBase + i * step;
+             uniqueSet.add(`${percent}%${base}`);
+          }
+       });
+    }
+    else if (op === 'exponentiation') {
+       let baseMin = 2, baseMax = 10;
+       let powerMin = 2, powerMax = 2;
+
+       if (level > 3) { powerMax = 3; }
+       if (level > 7) { powerMax = 4; baseMax = 12; }
+       
+       for (let base = baseMin; base <= baseMax; base++) {
+         let maxP = powerMax;
+         if (base > 10) maxP = 2;
+         else if (base > 5) maxP = 3;
+         
+         for (let p = powerMin; p <= maxP; p++) {
+           uniqueSet.add(`${base}^${p}`);
+         }
+       }
+    }
+    else if (op === 'algebra') {
+      // x + A = B -> logic: constant A from rangeA (scaled), x from rangeB (scaled)
+      // Ranges calculated above as minA, maxA, minB, maxB are correct with scale 1.5
+      const addMin = Math.ceil(config.rangeA[0]); // rangeA min is not scaled in generateProblems for algebra constant min
+      const addMax = maxA; // scaled
+      const ansMin = config.rangeB[0]; // rangeB min not scaled in generateProblems for algebra x min? 
+      // Checking generateProblems: const ansMin = Math.ceil(config.rangeB[0]); <- NO SCALE
+      
+      const realAnsMin = Math.ceil(config.rangeB[0]);
+      const realAnsMax = maxB;
+      
+      for (let c = addMin; c <= addMax; c++) {
+        for (let x = realAnsMin; x <= realAnsMax; x++) {
+          uniqueSet.add(`x+${c}=${x+c}`);
+        }
+      }
+    }
+  });
+  return uniqueSet.size;
+};
+
+const PROBLEM_COUNTS: Record<Operation, number> = {
+  multiplication: countUniqueProblems('multiplication'),
+  addition: countUniqueProblems('addition'),
+  subtraction: countUniqueProblems('subtraction'),
+  division: countUniqueProblems('division'),
+  percentage: countUniqueProblems('percentage'),
+  exponentiation: countUniqueProblems('exponentiation'),
+  algebra: countUniqueProblems('algebra'),
+};
+
 // Helper to generate unique random problems based on operation
 const generateProblems = (level: number, count: number, operation: Operation): { problems: Problem[], answers: number[] } => {
   const config = LEVELS[Math.min(level - 1, LEVELS.length - 1)];
@@ -174,8 +297,7 @@ const App: React.FC = () => {
   
   // Calculate total content stats for display
   const totalLevels = LEVELS.length;
-  const questionsPerOp = LEVELS.reduce((acc, lvl) => acc + lvl.count, 0);
-  const totalQuestions = questionsPerOp * 7; // 7 operations
+  const totalUniqueProblems = Object.values(PROBLEM_COUNTS).reduce((a, b) => a + b, 0);
 
   // Initialize stats, loading coins from localStorage if available
   const [stats, setStats] = useState<GameState>(() => {
@@ -384,7 +506,7 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2 mt-2 md:mt-4 bg-white/10 px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/5">
               <GraduationCap size={16} className="text-yellow-400" />
               <span className="text-[10px] sm:text-xs md:text-sm font-semibold tracking-wide text-white/90">
-                7 SPELSÄTT • {totalLevels} NIVÅER • {totalQuestions}+ UTMANINGAR
+                7 SPELSÄTT • {totalLevels} NIVÅER • {totalUniqueProblems}+ UTMANINGAR
               </span>
             </div>
           </div>
@@ -422,9 +544,14 @@ const App: React.FC = () => {
                    )}
                  </div>
                  <span className="font-bold text-xs sm:text-sm md:text-base leading-tight">{getOperationLabel(op)}</span>
-                 <span className="text-[9px] sm:text-[10px] font-medium text-white/50 mt-1 uppercase tracking-wide">
-                   {totalLevels} Nivåer
-                 </span>
+                 <div className="flex flex-col items-center mt-1">
+                   <span className="text-[9px] sm:text-[10px] font-medium text-white/50 uppercase tracking-wide">
+                     {totalLevels} Nivåer
+                   </span>
+                   <span className="text-[8px] sm:text-[9px] font-medium text-white/40 tracking-wide">
+                     {PROBLEM_COUNTS[op]} problem
+                   </span>
+                 </div>
                </button>
              ))}
           </div>
