@@ -9,7 +9,7 @@ import {
   DragStartEvent, 
   DragEndEvent 
 } from '@dnd-kit/core';
-import { Gamepad2, Coins, Trophy, RefreshCw, Star, Play, Lock, CheckCircle2, XCircle, Palette, Flame, BookOpen, Disc, Flag, Calculator, Divide, Plus, Minus, Zap, Percent } from 'lucide-react';
+import { Gamepad2, Coins, Trophy, RefreshCw, Star, Play, Lock, CheckCircle2, XCircle, Palette, Flame, BookOpen, Disc, Flag, Calculator, Divide, Plus, Minus, Zap, Percent, GraduationCap, Sigma, Binary } from 'lucide-react';
 import { THEMES, LEVELS } from './constants';
 import { Problem, Theme, GamePhase, GameState, Operation } from './types';
 import { DraggableCard } from './components/DraggableCard';
@@ -77,9 +77,6 @@ const generateProblems = (level: number, count: number, operation: Operation): {
       
       const percent = availablePercents[Math.floor(Math.random() * availablePercents.length)];
       
-      // We need to ensure the result is an integer. 
-      // Base (factorB) must be a multiple of (100 / GCD(percent, 100)).
-      // Simplified: Just use clean steps based on the percentage.
       let step = 10;
       if (percent === 50) step = 2;
       if (percent === 25 || percent === 75) step = 4;
@@ -96,6 +93,53 @@ const generateProblems = (level: number, count: number, operation: Operation): {
       factorA = percent;
       factorB = base;
       answer = (percent * base) / 100;
+    }
+    else if (operation === 'exponentiation') {
+       // Logic for exponents: Factor A is base, Factor B is exponent.
+       // Scale difficulty:
+       // Levels 1-3: Base 1-10, Power 2.
+       // Levels 4-7: Base 2-10, Power 2-3.
+       // Levels 8+: Base 2-12, Power 2-4 (with limits on large bases).
+       
+       let baseMin = 2, baseMax = 10;
+       let powerMin = 2, powerMax = 2;
+
+       if (level > 3) { powerMax = 3; }
+       if (level > 7) { powerMax = 4; baseMax = 12; }
+
+       const base = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+       
+       // Limit power based on base to prevent massive numbers
+       let maxP = powerMax;
+       if (base > 10) maxP = 2;
+       else if (base > 5) maxP = 3;
+       
+       const power = Math.floor(Math.random() * (maxP - powerMin + 1)) + powerMin;
+
+       factorA = base;
+       factorB = power;
+       answer = Math.pow(base, power);
+    }
+    else if (operation === 'algebra') {
+      // Logic for simple algebra: x + A = B. Find x.
+      // factorA = added constant (A)
+      // factorB = total sum (B)
+      // answer = x (B - A)
+      
+      // Use addition ranges
+      const addMin = Math.ceil(config.rangeA[0]);
+      const addMax = Math.ceil(config.rangeA[1] * 1.5);
+      
+      // The 'x' (answer) range
+      const ansMin = Math.ceil(config.rangeB[0]);
+      const ansMax = Math.ceil(config.rangeB[1] * 1.5);
+
+      const constant = Math.floor(Math.random() * (addMax - addMin + 1)) + addMin;
+      const xVal = Math.floor(Math.random() * (ansMax - ansMin + 1)) + ansMin;
+
+      answer = xVal;
+      factorA = constant;
+      factorB = xVal + constant; // The total
     }
 
     // Avoid duplicate answers on the same screen to prevent confusion
@@ -128,6 +172,11 @@ const App: React.FC = () => {
   const [shakeZoneValue, setShakeZoneValue] = useState<number | null>(null);
   const [streakPop, setStreakPop] = useState(false);
   
+  // Calculate total content stats for display
+  const totalLevels = LEVELS.length;
+  const questionsPerOp = LEVELS.reduce((acc, lvl) => acc + lvl.count, 0);
+  const totalQuestions = questionsPerOp * 7; // 7 operations
+
   // Initialize stats, loading coins from localStorage if available
   const [stats, setStats] = useState<GameState>(() => {
     let savedCoins = 0;
@@ -301,6 +350,8 @@ const App: React.FC = () => {
       case 'division': return 'Division';
       case 'multiplication': return 'Multiplikation';
       case 'percentage': return 'Procent';
+      case 'exponentiation': return 'Potenser';
+      case 'algebra': return 'Algebra';
     }
   };
 
@@ -324,14 +375,25 @@ const App: React.FC = () => {
     return (
       <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col items-center justify-center p-4 text-white overflow-y-auto`}>
         <div className="max-w-4xl w-full text-center space-y-4 md:space-y-8 animate-float py-8">
-          <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 drop-shadow-2xl">
-            MatteMästaren
-          </h1>
+          <div className="flex flex-col items-center">
+            <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 drop-shadow-2xl">
+              MatteMästaren
+            </h1>
+            
+            {/* Educational content summary */}
+            <div className="flex items-center gap-2 mt-2 md:mt-4 bg-white/10 px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/5">
+              <GraduationCap size={16} className="text-yellow-400" />
+              <span className="text-[10px] sm:text-xs md:text-sm font-semibold tracking-wide text-white/90">
+                7 SPELSÄTT • {totalLevels} NIVÅER • {totalQuestions}+ UTMANINGAR
+              </span>
+            </div>
+          </div>
+
           <p className="text-lg sm:text-xl md:text-2xl text-white/80">Välj räknesätt och bli en mästare!</p>
           
           {/* Operation Selector */}
           <div className="flex flex-wrap justify-center gap-3 md:gap-4 mt-8 px-2 md:px-4">
-             {(['multiplication', 'addition', 'subtraction', 'division', 'percentage'] as Operation[]).map(op => (
+             {(['multiplication', 'addition', 'subtraction', 'division', 'percentage', 'exponentiation', 'algebra'] as Operation[]).map(op => (
                <button
                  key={op}
                  onClick={() => setSelectedOperation(op)}
@@ -343,14 +405,26 @@ const App: React.FC = () => {
                    }
                  `}
                >
-                 <div className="text-2xl sm:text-3xl md:text-4xl mb-1 md:mb-2">
+                 <div className="text-2xl sm:text-3xl md:text-4xl mb-1 flex items-center justify-center h-10 md:h-12">
                    {op === 'multiplication' && <span className="text-purple-400">×</span>}
                    {op === 'addition' && <span className="text-green-400">+</span>}
                    {op === 'subtraction' && <span className="text-blue-400">−</span>}
                    {op === 'division' && <span className="text-pink-400">÷</span>}
                    {op === 'percentage' && <span className="text-yellow-400">%</span>}
+                   {op === 'exponentiation' && (
+                     <div className="relative">
+                       <span className="text-red-400">x</span>
+                       <span className="text-sm absolute -top-1 -right-2 text-white">2</span>
+                     </div>
+                   )}
+                   {op === 'algebra' && (
+                     <span className="text-cyan-400 text-lg md:text-2xl font-mono">x=</span>
+                   )}
                  </div>
-                 <span className="font-bold text-xs sm:text-sm md:text-base">{getOperationLabel(op)}</span>
+                 <span className="font-bold text-xs sm:text-sm md:text-base leading-tight">{getOperationLabel(op)}</span>
+                 <span className="text-[9px] sm:text-[10px] font-medium text-white/50 mt-1 uppercase tracking-wide">
+                   {totalLevels} Nivåer
+                 </span>
                </button>
              ))}
           </div>
@@ -430,6 +504,13 @@ const App: React.FC = () => {
                {selectedOperation === 'subtraction' && <span className="text-blue-300 font-bold text-base md:text-lg">−</span>}
                {selectedOperation === 'division' && <span className="text-pink-300 font-bold text-base md:text-lg">÷</span>}
                {selectedOperation === 'percentage' && <span className="text-yellow-300 font-bold text-base md:text-lg">%</span>}
+               {selectedOperation === 'exponentiation' && (
+                 <div className="flex relative">
+                   <span className="text-red-300 font-bold text-sm md:text-base">x</span>
+                   <span className="text-[10px] md:text-xs absolute -top-1 -right-1.5 text-red-200">2</span>
+                 </div>
+               )}
+               {selectedOperation === 'algebra' && <span className="text-cyan-300 font-bold text-xs md:text-sm font-mono">x=</span>}
             </div>
           </div>
 
@@ -602,16 +683,32 @@ const App: React.FC = () => {
                  const prob = getActiveProblem();
                  if (!prob) return null;
                  return (
-                   <div className="flex flex-col items-center justify-center text-white font-bold z-10">
-                     <span className="text-4xl md:text-5xl mb-1">{prob.factorA}</span>
-                     <span className="text-2xl md:text-3xl opacity-80">
-                        {prob.operator === 'addition' && '+'}
-                        {prob.operator === 'subtraction' && '−'}
-                        {prob.operator === 'division' && '÷'}
-                        {prob.operator === 'multiplication' && '×'}
-                        {prob.operator === 'percentage' && '%'}
-                     </span>
-                     <span className="text-4xl md:text-5xl mt-1">{prob.factorB}</span>
+                   <div className="flex flex-col items-center justify-center text-white font-bold z-10 w-full">
+                     {/* Reuse the rendering logic from DraggableCard or simple fallback */}
+                     {prob.operator === 'exponentiation' ? (
+                        <div className="relative flex items-start justify-center ml-2">
+                          <span className="text-5xl font-bold drop-shadow-md leading-none">{prob.factorA}</span>
+                          <span className="text-3xl font-bold opacity-90 leading-none mt-[-4px] ml-0.5">{prob.factorB}</span>
+                        </div>
+                     ) : prob.operator === 'algebra' ? (
+                        <div className="flex flex-col items-center justify-center">
+                           <span className="text-3xl mb-1 drop-shadow-md leading-none whitespace-nowrap">x + {prob.factorA}</span>
+                           <span className="text-2xl opacity-80 leading-none py-0.5">=</span>
+                           <span className="text-5xl mt-1 drop-shadow-md leading-none">{prob.factorB}</span>
+                        </div>
+                     ) : (
+                       <>
+                         <span className="text-5xl mb-1">{prob.factorA}</span>
+                         <span className="text-3xl opacity-80">
+                            {prob.operator === 'addition' && '+'}
+                            {prob.operator === 'subtraction' && '−'}
+                            {prob.operator === 'division' && '÷'}
+                            {prob.operator === 'multiplication' && '×'}
+                            {prob.operator === 'percentage' && '%'}
+                         </span>
+                         <span className="text-5xl mt-1">{prob.factorB}</span>
+                       </>
+                     )}
                    </div>
                  );
               })()}

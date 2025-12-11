@@ -38,9 +38,39 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
       case 'subtraction': return '−';
       case 'division': return '÷';
       case 'percentage': return '%';
-      case 'multiplication': 
-      default: return '×';
+      case 'multiplication': return '×';
+      case 'algebra': return '=';
+      default: return '';
     }
+  };
+
+  const renderContent = () => {
+    if (operator === 'exponentiation') {
+      return (
+        <div className="relative flex items-start justify-center ml-2">
+          <span className="text-4xl sm:text-5xl md:text-6xl font-bold drop-shadow-md leading-none">{factorA}</span>
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold opacity-90 leading-none mt-[-4px] ml-0.5">{factorB}</span>
+        </div>
+      );
+    }
+    
+    if (operator === 'algebra') {
+      return (
+        <div className="flex flex-col items-center justify-center">
+           <span className="text-xl sm:text-2xl md:text-3xl mb-0.5 md:mb-1 drop-shadow-md leading-none whitespace-nowrap">x + {factorA}</span>
+           <span className="text-lg sm:text-xl md:text-2xl opacity-80 leading-none py-0.5">=</span>
+           <span className="text-3xl sm:text-4xl md:text-5xl mt-0.5 md:mt-1 drop-shadow-md leading-none">{factorB}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center">
+        <span className="text-3xl sm:text-4xl md:text-5xl mb-0.5 md:mb-1 drop-shadow-md leading-none">{factorA}</span>
+        <span className="text-lg sm:text-xl md:text-2xl opacity-80 leading-none py-0.5">{getOperatorSymbol()}</span>
+        <span className="text-3xl sm:text-4xl md:text-5xl mt-0.5 md:mt-1 drop-shadow-md leading-none">{factorB}</span>
+      </div>
+    );
   };
 
   return (
@@ -51,7 +81,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
       {...attributes}
       className={`
         relative flex flex-col items-center justify-center 
-        w-20 h-28 sm:w-24 sm:h-32 md:w-32 md:h-44 
+        w-24 h-32 sm:w-28 sm:h-36 md:w-36 md:h-48 
         rounded-xl md:rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.5)] md:shadow-[0_10px_20px_rgba(0,0,0,0.5)] 
         border-b-4 md:border-b-8 overflow-hidden
         ${isShaking ? 'border-red-500 animate-shake' : `${theme.accentColor}`}
@@ -70,10 +100,8 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
         <GripVertical size={16} className="text-white w-4 h-4 md:w-5 md:h-5" />
       </div>
       
-      <div className="relative flex flex-col items-center justify-center text-white font-bold select-none pointer-events-none z-10">
-        <span className="text-3xl sm:text-4xl md:text-5xl mb-0.5 md:mb-1 drop-shadow-md leading-none">{factorA}</span>
-        <span className="text-lg sm:text-xl md:text-2xl opacity-80 leading-none py-0.5">{getOperatorSymbol()}</span>
-        <span className="text-3xl sm:text-4xl md:text-5xl mt-0.5 md:mt-1 drop-shadow-md leading-none">{factorB}</span>
+      <div className="relative flex flex-col items-center justify-center text-white font-bold select-none pointer-events-none z-10 w-full">
+        {renderContent()}
       </div>
       
       {/* Decorative shine */}
