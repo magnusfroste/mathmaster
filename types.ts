@@ -1,5 +1,5 @@
 export type ThemeId = 'classic' | 'hockey' | 'football';
-export type Operation = 'multiplication' | 'addition' | 'subtraction' | 'division';
+export type Operation = 'multiplication' | 'addition' | 'subtraction' | 'division' | 'percentage';
 
 export interface Theme {
   id: ThemeId;

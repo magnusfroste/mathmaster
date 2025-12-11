@@ -26,9 +26,9 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
 
   const getWatermark = () => {
     switch (theme.id) {
-      case 'hockey': return <Snowflake className="w-20 h-20 text-black/10 absolute rotate-12" />;
-      case 'football': return <Trophy className="w-20 h-20 text-black/10 absolute -rotate-12" />;
-      default: return <Calculator className="w-20 h-20 text-black/10 absolute" />;
+      case 'hockey': return <Snowflake className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute rotate-12" />;
+      case 'football': return <Trophy className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute -rotate-12" />;
+      default: return <Calculator className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute" />;
     }
   };
 
@@ -37,6 +37,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
       case 'addition': return '+';
       case 'subtraction': return '−';
       case 'division': return '÷';
+      case 'percentage': return '%';
       case 'multiplication': 
       default: return '×';
     }
@@ -50,9 +51,9 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
       {...attributes}
       className={`
         relative flex flex-col items-center justify-center 
-        w-28 h-36 md:w-32 md:h-44 
-        rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.5)] 
-        border-b-8 overflow-hidden
+        w-20 h-28 sm:w-24 sm:h-32 md:w-32 md:h-44 
+        rounded-xl md:rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.5)] md:shadow-[0_10px_20px_rgba(0,0,0,0.5)] 
+        border-b-4 md:border-b-8 overflow-hidden
         ${isShaking ? 'border-red-500 animate-shake' : `${theme.accentColor}`}
         ${theme.cardBg}
         cursor-grab active:cursor-grabbing touch-none
@@ -65,14 +66,14 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
         {getWatermark()}
       </div>
 
-      <div className="absolute top-2 right-2 opacity-50">
-        <GripVertical size={16} className="text-white" />
+      <div className="absolute top-1 right-1 md:top-2 md:right-2 opacity-50">
+        <GripVertical size={16} className="text-white w-4 h-4 md:w-5 md:h-5" />
       </div>
       
       <div className="relative flex flex-col items-center justify-center text-white font-bold select-none pointer-events-none z-10">
-        <span className="text-4xl md:text-5xl mb-1 drop-shadow-md">{factorA}</span>
-        <span className="text-2xl opacity-80">{getOperatorSymbol()}</span>
-        <span className="text-4xl md:text-5xl mt-1 drop-shadow-md">{factorB}</span>
+        <span className="text-3xl sm:text-4xl md:text-5xl mb-0.5 md:mb-1 drop-shadow-md leading-none">{factorA}</span>
+        <span className="text-lg sm:text-xl md:text-2xl opacity-80 leading-none py-0.5">{getOperatorSymbol()}</span>
+        <span className="text-3xl sm:text-4xl md:text-5xl mt-0.5 md:mt-1 drop-shadow-md leading-none">{factorB}</span>
       </div>
       
       {/* Decorative shine */}

@@ -9,7 +9,7 @@ import {
   DragStartEvent, 
   DragEndEvent 
 } from '@dnd-kit/core';
-import { Gamepad2, Coins, Trophy, RefreshCw, Star, Play, Lock, CheckCircle2, XCircle, Palette, Flame, BookOpen, Disc, Flag, Calculator, Divide, Plus, Minus, Zap } from 'lucide-react';
+import { Gamepad2, Coins, Trophy, RefreshCw, Star, Play, Lock, CheckCircle2, XCircle, Palette, Flame, BookOpen, Disc, Flag, Calculator, Divide, Plus, Minus, Zap, Percent } from 'lucide-react';
 import { THEMES, LEVELS } from './constants';
 import { Problem, Theme, GamePhase, GameState, Operation } from './types';
 import { DraggableCard } from './components/DraggableCard';
@@ -24,7 +24,6 @@ const generateProblems = (level: number, count: number, operation: Operation): {
   const usedAnswers = new Set<number>();
 
   // Scale up numbers for Addition/Subtraction to make them cognitively equivalent to multiplication levels
-  // e.g. Level 5 Mult is 2-10 (max 100). Level 5 Add should be higher than 2-10 (max 20).
   const rangeScale = (operation === 'addition' || operation === 'subtraction') ? 1.5 : 1;
 
   while (problems.length < count) {
@@ -57,7 +56,6 @@ const generateProblems = (level: number, count: number, operation: Operation): {
     }
     else if (operation === 'division') {
       // Ensure A is divisible by B
-      // For division, we keep numbers smaller to ensure basic times table knowledge covers it
       const divMin = Math.max(2, config.rangeB[0]);
       const divMax = config.rangeB[1];
       const quoMin = config.rangeA[0];
@@ -69,6 +67,35 @@ const generateProblems = (level: number, count: number, operation: Operation): {
       answer = quotient;
       factorB = divisor;
       factorA = quotient * divisor; // so A / B = answer
+    }
+    else if (operation === 'percentage') {
+      // Logic for percentages: Factor A is %, Factor B is the total. Answer is (A/100)*B.
+      // We limit percentages based on level to ensure learnability.
+      const availablePercents = level <= 3 ? [50, 100] 
+        : level <= 6 ? [10, 20, 25, 50, 100]
+        : [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+      
+      const percent = availablePercents[Math.floor(Math.random() * availablePercents.length)];
+      
+      // We need to ensure the result is an integer. 
+      // Base (factorB) must be a multiple of (100 / GCD(percent, 100)).
+      // Simplified: Just use clean steps based on the percentage.
+      let step = 10;
+      if (percent === 50) step = 2;
+      if (percent === 25 || percent === 75) step = 4;
+      if (percent === 5 || percent === 15) step = 20;
+      if (percent === 100) step = 1;
+      
+      // Determine max base based on level
+      const minBase = step;
+      const maxBase = Math.max(step * 5, level * 20);
+      
+      const steps = Math.floor((maxBase - minBase) / step) + 1;
+      const base = minBase + Math.floor(Math.random() * steps) * step;
+
+      factorA = percent;
+      factorB = base;
+      answer = (percent * base) / 100;
     }
 
     // Avoid duplicate answers on the same screen to prevent confusion
@@ -273,6 +300,7 @@ const App: React.FC = () => {
       case 'subtraction': return 'Subtraktion';
       case 'division': return 'Division';
       case 'multiplication': return 'Multiplikation';
+      case 'percentage': return 'Procent';
     }
   };
 
@@ -294,75 +322,76 @@ const App: React.FC = () => {
 
   if (phase === 'menu') {
     return (
-      <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col items-center justify-center p-6 text-white`}>
-        <div className="max-w-4xl w-full text-center space-y-8 animate-float">
-          <h1 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 drop-shadow-2xl">
+      <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col items-center justify-center p-4 text-white overflow-y-auto`}>
+        <div className="max-w-4xl w-full text-center space-y-4 md:space-y-8 animate-float py-8">
+          <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 drop-shadow-2xl">
             MatteMästaren
           </h1>
-          <p className="text-xl md:text-2xl text-white/80">Välj räknesätt och bli en mästare!</p>
+          <p className="text-lg sm:text-xl md:text-2xl text-white/80">Välj räknesätt och bli en mästare!</p>
           
           {/* Operation Selector */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 px-4">
-             {(['multiplication', 'addition', 'subtraction', 'division'] as Operation[]).map(op => (
+          <div className="flex flex-wrap justify-center gap-3 md:gap-4 mt-8 px-2 md:px-4">
+             {(['multiplication', 'addition', 'subtraction', 'division', 'percentage'] as Operation[]).map(op => (
                <button
                  key={op}
                  onClick={() => setSelectedOperation(op)}
                  className={`
-                   flex flex-col items-center justify-center p-4 rounded-2xl border-4 transition-all duration-200
+                   flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl sm:rounded-2xl border-2 sm:border-4 transition-all duration-200 w-24 sm:w-28 md:w-36
                    ${selectedOperation === op 
                      ? 'bg-white/20 border-yellow-400 scale-105 shadow-xl' 
                      : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/30'
                    }
                  `}
                >
-                 <div className="text-4xl mb-2">
+                 <div className="text-2xl sm:text-3xl md:text-4xl mb-1 md:mb-2">
                    {op === 'multiplication' && <span className="text-purple-400">×</span>}
                    {op === 'addition' && <span className="text-green-400">+</span>}
                    {op === 'subtraction' && <span className="text-blue-400">−</span>}
                    {op === 'division' && <span className="text-pink-400">÷</span>}
+                   {op === 'percentage' && <span className="text-yellow-400">%</span>}
                  </div>
-                 <span className="font-bold text-sm md:text-base">{getOperationLabel(op)}</span>
+                 <span className="font-bold text-xs sm:text-sm md:text-base">{getOperationLabel(op)}</span>
                </button>
              ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-8 px-4">
             {Object.values(THEMES).map(t => (
               <button
                 key={t.id}
                 onClick={() => setTheme(t)}
-                className={`relative p-6 rounded-3xl border-4 transition-all duration-300 transform hover:scale-105 active:scale-95 text-left group
+                className={`relative p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 transition-all duration-300 transform hover:scale-105 active:scale-95 text-left group
                   ${theme.id === t.id ? 'border-yellow-400 bg-white/20 shadow-xl' : 'border-white/10 bg-white/5 hover:bg-white/10'}
                 `}
               >
                 {theme.id === t.id && (
                   <div className="absolute -top-3 -right-3 bg-yellow-400 text-black p-2 rounded-full shadow-lg">
-                    <Star size={20} fill="black" />
+                    <Star size={16} fill="black" className="md:w-5 md:h-5" />
                   </div>
                 )}
-                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center mb-4 text-3xl shadow-lg ${t.primaryColor}`}>
+                <div className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center mb-2 md:mb-4 text-2xl md:text-3xl shadow-lg ${t.primaryColor}`}>
                   {t.id === 'classic' && '📚'}
                   {t.id === 'hockey' && '🏒'}
                   {t.id === 'football' && '⚽️'}
                 </div>
-                <h3 className="text-lg md:text-xl font-bold">{t.name}</h3>
+                <h3 className="text-base md:text-xl font-bold">{t.name}</h3>
               </button>
             ))}
           </div>
 
-          <div className="pt-8">
+          <div className="pt-4 md:pt-8">
             <button
               onClick={startGame}
-              className="bg-green-500 hover:bg-green-400 text-white text-2xl font-black py-6 px-16 rounded-full shadow-[0_10px_0_rgb(21,128,61)] active:shadow-[0_0px_0_rgb(21,128,61)] active:translate-y-2 transition-all flex items-center gap-4 mx-auto"
+              className="bg-green-500 hover:bg-green-400 text-white text-xl md:text-2xl font-black py-4 md:py-6 px-10 md:px-16 rounded-full shadow-[0_6px_0_rgb(21,128,61)] md:shadow-[0_10px_0_rgb(21,128,61)] active:shadow-[0_0px_0_rgb(21,128,61)] active:translate-y-2 transition-all flex items-center gap-2 md:gap-4 mx-auto"
             >
-              <Play fill="white" size={32} />
+              <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" />
               STARTA
             </button>
           </div>
 
-          <div className="inline-flex items-center gap-2 bg-black/30 px-6 py-2 rounded-full">
-            <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900 font-bold">$</div>
-            <span className="font-bold text-xl">{stats.coins} mynt</span>
+          <div className="inline-flex items-center gap-2 bg-black/30 px-4 py-2 md:px-6 md:rounded-full rounded-xl">
+            <div className="w-6 h-6 md:w-8 md:h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900 font-bold text-xs md:text-base">$</div>
+            <span className="font-bold text-lg md:text-xl">{stats.coins} mynt</span>
           </div>
         </div>
       </div>
@@ -378,28 +407,29 @@ const App: React.FC = () => {
       <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col overflow-hidden transition-colors duration-1000`}>
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 bg-black/20 backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl md:text-2xl font-bold hidden md:block text-white/90">MatteMästaren</h1>
+        <div className="flex items-center justify-between p-2 sm:p-4 md:p-6 bg-black/20 backdrop-blur-md border-b border-white/10 shrink-0 z-20">
+          <div className="flex items-center gap-2 md:gap-4">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold hidden md:block text-white/90">MatteMästaren</h1>
             
             <button 
               onClick={cycleTheme}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
               title="Byt tema"
             >
-              <Palette size={20} />
+              <Palette size={18} className="md:w-5 md:h-5" />
             </button>
 
-            <div className={`flex items-center gap-2 px-3 py-1 md:px-4 md:py-2 rounded-xl border border-white/10 ${theme.primaryColor} bg-opacity-80 shadow-lg`}>
-              <span className="text-white font-bold tracking-wide text-sm md:text-base">Nivå {stats.level}</span>
+            <div className={`flex items-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-white/10 ${theme.primaryColor} bg-opacity-80 shadow-lg`}>
+              <span className="text-white font-bold tracking-wide text-xs md:text-base whitespace-nowrap">Nivå {stats.level}</span>
             </div>
             
             {/* Show Current Operation */}
-            <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/20">
-               {selectedOperation === 'multiplication' && <span className="text-purple-300 font-bold text-lg">×</span>}
-               {selectedOperation === 'addition' && <span className="text-green-300 font-bold text-lg">+</span>}
-               {selectedOperation === 'subtraction' && <span className="text-blue-300 font-bold text-lg">−</span>}
-               {selectedOperation === 'division' && <span className="text-pink-300 font-bold text-lg">÷</span>}
+            <div className="flex items-center justify-center w-7 h-7 md:w-10 md:h-10 rounded-full bg-white/10 border border-white/20">
+               {selectedOperation === 'multiplication' && <span className="text-purple-300 font-bold text-base md:text-lg">×</span>}
+               {selectedOperation === 'addition' && <span className="text-green-300 font-bold text-base md:text-lg">+</span>}
+               {selectedOperation === 'subtraction' && <span className="text-blue-300 font-bold text-base md:text-lg">−</span>}
+               {selectedOperation === 'division' && <span className="text-pink-300 font-bold text-base md:text-lg">÷</span>}
+               {selectedOperation === 'percentage' && <span className="text-yellow-300 font-bold text-base md:text-lg">%</span>}
             </div>
           </div>
 
@@ -412,38 +442,38 @@ const App: React.FC = () => {
                 ${streakPop ? 'scale-150' : 'scale-100'}
               `}>
                 {getStreakIcon()}
-                <span className="text-2xl font-black italic">{stats.streak}</span>
+                <span className="text-xl md:text-2xl font-black italic">{stats.streak}</span>
               </div>
               {stats.streak >= 5 && (
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${stats.streak >= 10 ? 'text-purple-300' : 'text-orange-400'}`}>
+                <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${stats.streak >= 10 ? 'text-purple-300' : 'text-orange-400'}`}>
                   {stats.streak >= 10 ? 'SUPER!' : 'ON FIRE!'}
                 </span>
               )}
             </div>
 
             <div className="flex flex-col items-end">
-              <div className="flex items-center gap-2">
-                <Trophy size={20} className="text-yellow-400" />
-                <span className="text-xl font-bold">{stats.score}</span>
+              <div className="flex items-center gap-1 md:gap-2">
+                <Trophy size={16} className="text-yellow-400 md:w-5 md:h-5" />
+                <span className="text-lg md:text-xl font-bold">{stats.score}</span>
               </div>
             </div>
 
-            <div className={`relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-full border-4 ${stats.timeLeft < 10 ? 'border-red-500 bg-red-500/20 animate-pulse' : 'border-blue-500 bg-blue-500/20'}`}>
+            <div className={`relative w-10 h-10 sm:w-12 sm:h-12 md:w-20 md:h-20 flex items-center justify-center rounded-full border-2 md:border-4 ${stats.timeLeft < 10 ? 'border-red-500 bg-red-500/20 animate-pulse' : 'border-blue-500 bg-blue-500/20'}`}>
               <div className="flex flex-col items-center">
-                <span className="text-xl md:text-2xl font-black">{stats.timeLeft}</span>
-                <span className="text-[8px] md:text-[10px] uppercase font-bold">Sek</span>
+                <span className="text-base sm:text-lg md:text-2xl font-black">{stats.timeLeft}</span>
+                <span className="text-[7px] md:text-[10px] uppercase font-bold">Sek</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Main Game Area */}
-        <div className="flex-1 flex flex-col relative max-w-7xl mx-auto w-full p-4">
+        <div className="flex-1 flex flex-col relative max-w-7xl mx-auto w-full p-2 md:p-4 overflow-hidden">
           
-          {/* Active Cards Area (Top) */}
-          <div className="flex-1 flex items-center justify-center py-4">
+          {/* Active Cards Area (Top) - Allow it to shrink, but prioritize showing content */}
+          <div className="flex-1 flex items-center justify-center py-2 md:py-4 min-h-0">
             {phase === 'playing' ? (
-              <div className="flex flex-wrap justify-center gap-4 md:gap-8 perspective-1000">
+              <div className="flex flex-wrap justify-center content-center gap-2 sm:gap-4 md:gap-8 perspective-1000 w-full h-full overflow-y-auto">
                 {problems.map((prob) => (
                   <DraggableCard 
                     key={prob.id} 
@@ -460,13 +490,13 @@ const App: React.FC = () => {
           </div>
 
           {/* Goal Text */}
-          <div className="text-center py-2">
-            <p className="text-white/60 font-bold text-lg animate-pulse">Dra korten till rätt svar!</p>
+          <div className="text-center py-1 md:py-2 shrink-0">
+            <p className="text-white/60 font-bold text-xs sm:text-sm md:text-lg animate-pulse">Dra korten till rätt svar!</p>
           </div>
 
-          {/* Drop Zones (Bottom) */}
-          <div className="h-1/2 bg-black/20 rounded-t-3xl border-t border-white/10 p-6 backdrop-blur-sm">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 h-full content-start">
+          {/* Drop Zones (Bottom) - Adjust height dynamically */}
+          <div className="shrink-0 bg-black/20 rounded-t-2xl md:rounded-t-3xl border-t border-white/10 p-2 sm:p-4 md:p-6 backdrop-blur-sm max-h-[50vh] overflow-y-auto">
+            <div className="grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4 content-center">
               {answers.map((ans, idx) => (
                 <DroppableZone 
                   key={`ans-${ans}-${idx}`} 
@@ -485,35 +515,35 @@ const App: React.FC = () => {
 
         {/* Level Up Modal */}
         {phase === 'levelup' && (
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
-            <div className={`bg-gradient-to-br ${theme.bgGradient} p-8 rounded-3xl text-center max-w-lg w-full shadow-2xl border-4 border-yellow-400 relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300 p-4">
+            <div className={`bg-gradient-to-br ${theme.bgGradient} p-6 md:p-8 rounded-3xl text-center max-w-lg w-full shadow-2xl border-4 border-yellow-400 relative overflow-hidden`}>
               <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
               
               <div className="relative z-10">
                 <div className="inline-block p-4 rounded-full bg-yellow-400 mb-6 shadow-[0_0_50px_rgba(250,204,21,0.5)] animate-bounce">
-                  <Trophy size={64} className="text-yellow-900" />
+                  <Trophy size={48} className="text-yellow-900 md:w-16 md:h-16" />
                 </div>
                 
-                <h2 className="text-5xl font-black text-white mb-2 drop-shadow-lg">Bra jobbat!</h2>
-                <p className="text-xl text-white/80 mb-8">Nivå {stats.level} avklarad!</p>
+                <h2 className="text-3xl md:text-5xl font-black text-white mb-2 drop-shadow-lg">Bra jobbat!</h2>
+                <p className="text-lg md:text-xl text-white/80 mb-8">Nivå {stats.level} avklarad!</p>
                 
-                <div className="flex justify-center gap-8 mb-8">
+                <div className="flex justify-center gap-4 md:gap-8 mb-8">
                   <div className="text-center">
-                    <p className="text-sm uppercase text-white/60 font-bold">Poäng</p>
-                    <p className="text-3xl font-bold text-white">+{LEVELS[Math.min(stats.level - 1, LEVELS.length - 1)].points}</p>
+                    <p className="text-xs md:text-sm uppercase text-white/60 font-bold">Poäng</p>
+                    <p className="text-2xl md:text-3xl font-bold text-white">+{LEVELS[Math.min(stats.level - 1, LEVELS.length - 1)].points}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm uppercase text-white/60 font-bold">Mynt</p>
+                    <p className="text-xs md:text-sm uppercase text-white/60 font-bold">Mynt</p>
                     <div className="flex items-center justify-center gap-1">
-                      <div className="w-6 h-6 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-xs">$</div>
-                      <p className="text-3xl font-bold text-white">+{Math.floor(LEVELS[Math.min(stats.level - 1, LEVELS.length - 1)].points / 5)}</p>
+                      <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-xs">$</div>
+                      <p className="text-2xl md:text-3xl font-bold text-white">+{Math.floor(LEVELS[Math.min(stats.level - 1, LEVELS.length - 1)].points / 5)}</p>
                     </div>
                   </div>
                 </div>
 
                 <button 
                   onClick={nextLevel}
-                  className="w-full bg-green-500 hover:bg-green-400 text-white text-2xl font-bold py-4 rounded-xl shadow-[0_6px_0_rgb(21,128,61)] active:shadow-none active:translate-y-2 transition-all"
+                  className="w-full bg-green-500 hover:bg-green-400 text-white text-xl md:text-2xl font-bold py-3 md:py-4 rounded-xl shadow-[0_6px_0_rgb(21,128,61)] active:shadow-none active:translate-y-2 transition-all"
                 >
                   Nästa Nivå
                 </button>
@@ -524,24 +554,24 @@ const App: React.FC = () => {
 
         {/* Game Over Modal */}
         {phase === 'gameover' && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50">
-            <div className="bg-slate-800 p-8 rounded-3xl text-center max-w-md w-full border-2 border-red-500/50">
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-800 p-6 md:p-8 rounded-3xl text-center max-w-md w-full border-2 border-red-500/50">
               <div className="inline-block p-4 rounded-full bg-slate-700 mb-6">
-                <RefreshCw size={48} className="text-white" />
+                <RefreshCw size={40} className="text-white md:w-12 md:h-12" />
               </div>
-              <h2 className="text-4xl font-bold text-white mb-4">Tiden är ute!</h2>
-              <p className="text-lg text-slate-300 mb-8">Du nådde nivå {stats.level} och fick {stats.score} poäng.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Tiden är ute!</h2>
+              <p className="text-base md:text-lg text-slate-300 mb-8">Du nådde nivå {stats.level} och fick {stats.score} poäng.</p>
               
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 <button 
                   onClick={startGame}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xl font-bold py-4 rounded-xl transition-colors"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white text-lg md:text-xl font-bold py-3 md:py-4 rounded-xl transition-colors"
                 >
                   Försök igen
                 </button>
                 <button 
                   onClick={() => setPhase('menu')}
-                  className="w-full bg-transparent hover:bg-white/10 text-white/50 text-lg font-bold py-4 rounded-xl transition-colors"
+                  className="w-full bg-transparent hover:bg-white/10 text-white/50 text-base md:text-lg font-bold py-3 md:py-4 rounded-xl transition-colors"
                 >
                   Tillbaka till menyn
                 </button>
@@ -554,7 +584,7 @@ const App: React.FC = () => {
           {activeId ? (
             <div className={`
               flex flex-col items-center justify-center 
-              w-32 h-44 rounded-2xl shadow-2xl 
+              w-24 h-32 md:w-32 md:h-44 rounded-xl md:rounded-2xl shadow-2xl 
               ${theme.cardBg} scale-110 cursor-grabbing
               border-4 border-white overflow-hidden relative
             `}>
@@ -573,14 +603,15 @@ const App: React.FC = () => {
                  if (!prob) return null;
                  return (
                    <div className="flex flex-col items-center justify-center text-white font-bold z-10">
-                     <span className="text-5xl mb-1">{prob.factorA}</span>
-                     <span className="text-3xl opacity-80">
+                     <span className="text-4xl md:text-5xl mb-1">{prob.factorA}</span>
+                     <span className="text-2xl md:text-3xl opacity-80">
                         {prob.operator === 'addition' && '+'}
                         {prob.operator === 'subtraction' && '−'}
                         {prob.operator === 'division' && '÷'}
                         {prob.operator === 'multiplication' && '×'}
+                        {prob.operator === 'percentage' && '%'}
                      </span>
-                     <span className="text-5xl mt-1">{prob.factorB}</span>
+                     <span className="text-4xl md:text-5xl mt-1">{prob.factorB}</span>
                    </div>
                  );
               })()}
