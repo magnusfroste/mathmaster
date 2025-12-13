@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
   DndContext, 
-  DragOverlay, 
   MouseSensor, 
   TouchSensor, 
   useSensor, 
   useSensors, 
   DragStartEvent, 
-  DragEndEvent 
+  DragEndEvent,
+  DragOverlay
 } from '@dnd-kit/core';
-import { Trophy, RefreshCw, Star, Play, Palette, Flame, Zap, GraduationCap, ArrowLeft, RotateCcw, Rocket, X } from 'lucide-react';
-import { THEMES, LEVELS } from './constants';
-import { Problem, Theme, GamePhase, GameState, Operation } from './types';
+import { Trophy, RefreshCw, Star, Play, Palette, Flame, Zap, GraduationCap, ArrowLeft, RotateCcw, Rocket, X, Book, Users, Brain, Calculator, BookOpen } from 'lucide-react';
+import { THEMES, LEVELS, CURRICULUM } from './constants';
+import { Problem, Theme, GamePhase, GameState, Operation, GradeLevel } from './types';
 import { DraggableCard } from './components/DraggableCard';
 import { DroppableZone } from './components/DroppableZone';
 import { triggerConfetti } from './components/Confetti';
@@ -20,8 +20,12 @@ import { PROBLEM_COUNTS, generateProblems } from './utils/mathLogic';
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(THEMES.classic);
-  const [phase, setPhase] = useState<GamePhase>('menu');
+  // Default phase check: if no grade in localstorage, go to grade_selection
+  const [phase, setPhase] = useState<GamePhase>('grade_selection');
+  const [grade, setGrade] = useState<GradeLevel | null>(null);
+  
   const [selectedOperation, setSelectedOperation] = useState<Operation>('multiplication');
+  const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -31,7 +35,6 @@ const App: React.FC = () => {
   const [streakPop, setStreakPop] = useState(false);
   
   const totalLevels = LEVELS.length;
-  const totalUniqueProblems = Object.values(PROBLEM_COUNTS).reduce((a, b) => a + b, 0);
 
   const [stats, setStats] = useState<GameState>(() => {
     let savedCoins = 0;
@@ -54,6 +57,27 @@ const App: React.FC = () => {
     };
   });
   
+  // Load grade from storage on mount
+  useEffect(() => {
+    try {
+      const storedGrade = localStorage.getItem('mm_grade') as GradeLevel;
+      if (storedGrade && CURRICULUM[storedGrade]) {
+        setGrade(storedGrade);
+        setPhase('menu');
+        
+        // Ensure selected operation is valid for this grade
+        const validOps = CURRICULUM[storedGrade].allowedOperations;
+        if (!validOps.includes(selectedOperation)) {
+          setSelectedOperation(validOps[0]);
+        }
+      } else {
+        setPhase('grade_selection');
+      }
+    } catch (e) {
+      console.warn('Error loading grade', e);
+    }
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('mm_coins', stats.coins.toString());
@@ -61,6 +85,23 @@ const App: React.FC = () => {
       console.warn('Could not save coins to localStorage', e);
     }
   }, [stats.coins]);
+
+  const selectGrade = (g: GradeLevel) => {
+    setGrade(g);
+    try {
+      localStorage.setItem('mm_grade', g);
+    } catch (e) {}
+    
+    // Set default operation for this grade
+    const validOps = CURRICULUM[g].allowedOperations;
+    setSelectedOperation(validOps[0]);
+    
+    setPhase('menu');
+  };
+
+  const changeGrade = () => {
+    setPhase('grade_selection');
+  };
   
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -90,15 +131,18 @@ const App: React.FC = () => {
   }, [phase, stats.timeLeft, theme.id]);
 
   const startGame = () => {
-    const { problems: newProblems, answers: newAnswers } = generateProblems(1, LEVELS[0].count, selectedOperation);
+    // Start at the selected level
+    const levelIndex = Math.min(selectedLevel - 1, LEVELS.length - 1);
+    const config = LEVELS[levelIndex];
+    const { problems: newProblems, answers: newAnswers } = generateProblems(selectedLevel, config.count, selectedOperation);
     setProblems(newProblems);
     setAnswers(newAnswers);
     setStats({
       score: 0,
       coins: stats.coins,
-      level: 1,
+      level: selectedLevel,
       streak: 0,
-      timeLeft: LEVELS[0].time
+      timeLeft: config.time
     });
     setPhase('playing');
   };
@@ -135,7 +179,7 @@ const App: React.FC = () => {
   };
 
   const cycleTheme = () => {
-    const themesList = Object.values(THEMES);
+    const themesList = Object.values(THEMES) as Theme[];
     const currentIndex = themesList.findIndex(t => t.id === theme.id);
     const nextIndex = (currentIndex + 1) % themesList.length;
     setTheme(themesList[nextIndex]);
@@ -233,72 +277,175 @@ const App: React.FC = () => {
     return <Flame size={20} />;
   };
 
-  if (phase === 'menu') {
+  const getGradeColor = (g: GradeLevel) => {
+    switch(g) {
+      case 'F': return 'from-green-500/20 to-green-600/20 border-green-400/50 hover:border-green-400';
+      case '1': return 'from-emerald-500/20 to-emerald-600/20 border-emerald-400/50 hover:border-emerald-400';
+      case '2': return 'from-teal-500/20 to-teal-600/20 border-teal-400/50 hover:border-teal-400';
+      case '3': return 'from-cyan-500/20 to-cyan-600/20 border-cyan-400/50 hover:border-cyan-400';
+      case '4-6': return 'from-blue-500/20 to-indigo-600/20 border-blue-400/50 hover:border-blue-400';
+      case '7-9': return 'from-violet-500/20 to-purple-600/20 border-purple-400/50 hover:border-purple-400';
+      default: return 'from-white/10 to-white/5 border-white/20';
+    }
+  };
+
+  if (phase === 'grade_selection') {
     return (
-      <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col items-center justify-center p-4 text-white overflow-y-auto`}>
-        <div className="max-w-4xl w-full text-center space-y-4 md:space-y-8 animate-float py-8">
+      <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col items-center justify-center p-4 text-white`}>
+        <div className="max-w-4xl w-full text-center space-y-8 animate-in fade-in duration-500">
           <div className="flex flex-col items-center">
-            <h1 className="text-4xl sm:text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 drop-shadow-2xl">
+             <div className="bg-white/10 p-5 rounded-full mb-4 ring-4 ring-white/10">
+                <Users size={56} className="text-yellow-400 drop-shadow-lg" />
+             </div>
+             <h1 className="text-4xl md:text-6xl font-black text-white mb-2 drop-shadow-lg">Välkommen!</h1>
+             <p className="text-xl md:text-2xl text-white/80 font-medium">Vilken klass går du i?</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto px-2">
+            {(Object.entries(CURRICULUM) as [GradeLevel, typeof CURRICULUM[GradeLevel]][]).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => selectGrade(key)}
+                className={`
+                  group relative rounded-2xl p-6 text-left transition-all duration-300
+                  bg-gradient-to-br border-2 shadow-lg hover:shadow-2xl hover:-translate-y-1
+                  ${getGradeColor(key)}
+                `}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-2xl md:text-3xl font-black tracking-tight">{config.label}</span>
+                  {key === '7-9' ? <Brain className="text-purple-300" /> : <BookOpen className="opacity-50 group-hover:opacity-100 transition-opacity" />}
+                </div>
+                <p className="text-white/70 text-sm font-medium leading-snug">{config.description}</p>
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
+                  <ArrowLeft className="rotate-180 w-5 h-5 text-white" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'menu') {
+    const allowedOps = grade ? CURRICULUM[grade].allowedOperations : ['addition'];
+    
+    return (
+      <div className={`min-h-screen w-full bg-gradient-to-br ${theme.bgGradient} flex flex-col items-center p-4 text-white overflow-y-auto`}>
+        {/* Top Bar for Changing Grade - Highly Visible */}
+        <div className="w-full max-w-6xl flex items-center justify-between mb-4 md:mb-8 z-10 sticky top-0 bg-black/20 backdrop-blur-md p-4 rounded-b-3xl border-b border-white/5">
+            <button 
+              onClick={changeGrade}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-bold transition-all border border-white/10 hover:border-white/30 hover:scale-105 active:scale-95 group"
+            >
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              <div className="flex flex-col items-start">
+                  <span className="text-[10px] uppercase text-white/50 tracking-wider">Klass</span>
+                  <span className="text-sm md:text-base leading-none font-bold">{grade && CURRICULUM[grade].label}</span>
+              </div>
+            </button>
+            
+            <h1 className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 drop-shadow-lg hidden sm:block">
               MatteMästaren
             </h1>
             
-            <div className="flex items-center gap-2 mt-2 md:mt-4 bg-white/10 px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/5">
-              <GraduationCap size={16} className="text-yellow-400" />
-              <span className="text-[10px] sm:text-xs md:text-sm font-semibold tracking-wide text-white/90">
-                8 SPELSÄTT • {totalLevels} NIVÅER • {totalUniqueProblems}+ UTMANINGAR
-              </span>
+            <div className="inline-flex items-center gap-2 bg-black/40 px-4 py-2 rounded-full border border-white/10">
+                <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900 font-black text-xs">$</div>
+                <span className="font-bold text-lg">{stats.coins}</span>
             </div>
+        </div>
+
+        <div className="max-w-5xl w-full text-center space-y-6 md:space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-500 pb-10">
+          
+          <div className="flex flex-col items-center sm:hidden">
+            <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 drop-shadow-2xl mt-4 tracking-tight">
+              MatteMästaren
+            </h1>
           </div>
 
-          <p className="text-lg sm:text-xl md:text-2xl text-white/80">Välj räknesätt och bli en mästare!</p>
+          {/* New Level Selector - Prominently Displayed */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-4 md:p-6 border border-white/10 shadow-xl max-w-4xl mx-auto">
+             <div className="flex items-center justify-center gap-2 mb-4">
+                 <Trophy className="text-yellow-400" size={24} />
+                 <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wide">Välj Nivå</h2>
+             </div>
+             <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+                {LEVELS.map((lvl) => (
+                    <button
+                        key={lvl.level}
+                        onClick={() => setSelectedLevel(lvl.level)}
+                        className={`
+                            w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl font-black text-lg md:text-2xl transition-all flex items-center justify-center shadow-lg border-b-4
+                            ${selectedLevel === lvl.level 
+                                ? 'bg-yellow-400 text-black border-yellow-600 scale-110 -translate-y-1 ring-4 ring-yellow-400/30' 
+                                : 'bg-white/10 text-white border-white/5 hover:bg-white/20 hover:border-white/10'}
+                        `}
+                    >
+                        {lvl.level}
+                    </button>
+                ))}
+             </div>
+             <div className="mt-4 flex items-center justify-center gap-2 text-white/60 bg-black/20 w-fit mx-auto px-4 py-1.5 rounded-full">
+               <Star size={14} className="text-yellow-400 fill-yellow-400" />
+               <p className="text-xs md:text-sm font-medium">Nivå {selectedLevel}: {LEVELS[selectedLevel-1].points} poäng per rätt svar</p>
+             </div>
+          </div>
           
-          <div className="flex flex-wrap justify-center gap-3 md:gap-4 mt-8 px-2 md:px-4">
-             {(['multiplication', 'addition', 'subtraction', 'division', 'percentage', 'exponentiation', 'root', 'algebra'] as Operation[]).map(op => (
+          <p className="text-xl md:text-2xl text-white/90 font-medium drop-shadow-md">Välj räknesätt</p>
+
+          {/* Operations Grid */}
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6 px-2 md:px-4">
+             {allowedOps.map(op => (
                <button
                  key={op}
                  onClick={() => setSelectedOperation(op)}
                  className={`
-                   flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl sm:rounded-2xl border-2 sm:border-4 transition-all duration-200 w-24 sm:w-28 md:w-36
+                   flex flex-col items-center justify-between p-3 sm:p-4 rounded-2xl border-2 sm:border-4 transition-all duration-200 w-28 sm:w-32 md:w-40 min-h-[160px] md:min-h-[200px]
                    ${selectedOperation === op 
-                     ? 'bg-white/20 border-yellow-400 scale-105 shadow-xl' 
-                     : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/30'
+                     ? 'bg-white/20 border-yellow-400 scale-105 shadow-[0_0_20px_rgba(250,204,21,0.3)] z-10' 
+                     : 'bg-white/5 border-transparent hover:bg-white/15 hover:border-white/30 hover:shadow-lg opacity-80 hover:opacity-100'
                    }
                  `}
                >
-                 <div className="text-2xl sm:text-3xl md:text-4xl mb-1 flex items-center justify-center h-10 md:h-12">
-                   {op === 'multiplication' && <span className="text-purple-400">×</span>}
-                   {op === 'addition' && <span className="text-green-400">+</span>}
-                   {op === 'subtraction' && <span className="text-blue-400">−</span>}
-                   {op === 'division' && <span className="text-pink-400">÷</span>}
-                   {op === 'percentage' && <span className="text-yellow-400">%</span>}
-                   {op === 'exponentiation' && (
-                     <div className="relative">
-                       <span className="text-red-400">x</span>
-                       <span className="text-sm absolute -top-1 -right-2 text-white">2</span>
-                     </div>
-                   )}
-                   {op === 'algebra' && (
-                     <span className="text-cyan-400 text-lg md:text-2xl font-mono">x=</span>
-                   )}
-                   {op === 'root' && (
-                     <span className="text-orange-400 text-lg md:text-2xl font-bold font-mono">√x</span>
-                   )}
+                 <div className="flex-1 flex items-center justify-center w-full">
+                    <div className="text-3xl sm:text-4xl md:text-5xl mb-1 flex items-center justify-center">
+                      {op === 'multiplication' && <span className="text-purple-400 drop-shadow-md">×</span>}
+                      {op === 'addition' && <span className="text-green-400 drop-shadow-md">+</span>}
+                      {op === 'subtraction' && <span className="text-blue-400 drop-shadow-md">−</span>}
+                      {op === 'division' && <span className="text-pink-400 drop-shadow-md">÷</span>}
+                      {op === 'percentage' && <span className="text-yellow-400 drop-shadow-md">%</span>}
+                      {op === 'exponentiation' && (
+                        <div className="relative">
+                          <span className="text-red-400 drop-shadow-md">x</span>
+                          <span className="text-sm absolute -top-1 -right-2 text-white">2</span>
+                        </div>
+                      )}
+                      {op === 'algebra' && (
+                        <span className="text-cyan-400 text-xl md:text-3xl font-mono drop-shadow-md">x=</span>
+                      )}
+                      {op === 'root' && (
+                        <span className="text-orange-400 text-xl md:text-3xl font-bold font-mono drop-shadow-md">√x</span>
+                      )}
+                    </div>
                  </div>
-                 <span className="font-bold text-xs sm:text-sm md:text-base leading-tight">{getOperationLabel(op)}</span>
-                 <div className="flex flex-col items-center mt-1">
-                   <span className="text-[9px] sm:text-[10px] font-medium text-white/50 uppercase tracking-wide">
-                     {totalLevels} Nivåer
-                   </span>
-                   <span className="text-[8px] sm:text-[9px] font-medium text-white/40 tracking-wide">
-                     {PROBLEM_COUNTS[op]} problem
-                   </span>
+                 
+                 <span className="font-bold text-sm sm:text-base md:text-lg leading-tight mb-2">{getOperationLabel(op)}</span>
+                 
+                 <div className="w-full space-y-1.5">
+                   <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-2 py-1 w-full text-center">
+                      <span className="text-[10px] sm:text-xs font-black text-yellow-300 tracking-wide block truncate">
+                        {PROBLEM_COUNTS[op]} uppgifter
+                      </span>
+                   </div>
                  </div>
                </button>
              ))}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-6 md:mt-8 px-4">
-            {Object.values(THEMES).map(t => (
+          {/* Themes */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8 px-4">
+            {(Object.values(THEMES) as Theme[]).map(t => (
               <button
                 key={t.id}
                 onClick={() => setTheme(t)}
@@ -322,19 +469,17 @@ const App: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-4 md:pt-8">
+          {/* Start Button */}
+          <div className="pt-6 md:pt-8 pb-12">
             <button
               onClick={startGame}
-              className="bg-green-500 hover:bg-green-400 text-white text-xl md:text-2xl font-black py-4 md:py-6 px-10 md:px-16 rounded-full shadow-[0_6px_0_rgb(21,128,61)] md:shadow-[0_10px_0_rgb(21,128,61)] active:shadow-[0_0px_0_rgb(21,128,61)] active:translate-y-2 transition-all flex items-center gap-2 md:gap-4 mx-auto"
+              className="bg-green-500 hover:bg-green-400 text-white text-xl md:text-3xl font-black py-4 md:py-6 px-12 md:px-20 rounded-full shadow-[0_6px_0_rgb(21,128,61)] md:shadow-[0_10px_0_rgb(21,128,61)] active:shadow-[0_0px_0_rgb(21,128,61)] active:translate-y-2 transition-all flex items-center gap-2 md:gap-4 mx-auto group"
             >
-              <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" />
-              STARTA
+              <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
+                 <Play fill="white" className="w-6 h-6 md:w-8 md:h-8" />
+              </div>
+              STARTA SPEL (NIVÅ {selectedLevel})
             </button>
-          </div>
-
-          <div className="inline-flex items-center gap-2 bg-black/30 px-4 py-2 md:px-6 md:rounded-full rounded-xl">
-            <div className="w-6 h-6 md:w-8 md:h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900 font-bold text-xs md:text-base">$</div>
-            <span className="font-bold text-lg md:text-xl">{stats.coins} mynt</span>
           </div>
         </div>
       </div>

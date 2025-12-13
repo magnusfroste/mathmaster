@@ -1,4 +1,4 @@
-import { Theme } from './types';
+import { Theme, Operation, GradeLevel } from './types';
 import { BookOpen, Trophy, Medal } from 'lucide-react';
 
 export const THEMES: Record<string, Theme> = {
@@ -34,6 +34,17 @@ export const THEMES: Record<string, Theme> = {
     bgGradient: 'from-slate-900 via-green-900 to-slate-900',
     cardBg: 'bg-green-600',
     icon: 'ball'
+  },
+  space: {
+    id: 'space',
+    name: 'Rymdäventyr',
+    description: 'Räkna bland stjärnorna',
+    primaryColor: 'bg-fuchsia-600',
+    secondaryColor: 'bg-fuchsia-500',
+    accentColor: 'border-fuchsia-400',
+    bgGradient: 'from-black via-violet-900 to-slate-900',
+    cardBg: 'bg-fuchsia-600',
+    icon: 'rocket'
   }
 };
 
@@ -59,3 +70,42 @@ export const LEVELS = [
   // Level 10: Grandmaster
   { level: 10, rangeA: [3, 15], rangeB: [3, 15], count: 10, time: 45, points: 100 },
 ];
+
+export interface GradeConfig {
+  label: string;
+  allowedOperations: Operation[];
+  description: string;
+}
+
+export const CURRICULUM: Record<GradeLevel, GradeConfig> = {
+  'F': {
+    label: 'Förskoleklass',
+    allowedOperations: ['addition'],
+    description: 'Vi lär oss plussa enkla tal!'
+  },
+  '1': {
+    label: 'Årskurs 1',
+    allowedOperations: ['addition', 'subtraction'],
+    description: 'Plus och minus upp till 20.'
+  },
+  '2': {
+    label: 'Årskurs 2',
+    allowedOperations: ['addition', 'subtraction', 'multiplication'],
+    description: 'Vi börjar med gångertabellen.'
+  },
+  '3': {
+    label: 'Årskurs 3',
+    allowedOperations: ['multiplication', 'division', 'addition', 'subtraction'],
+    description: 'Alla fyra räknesätten!'
+  },
+  '4-6': {
+    label: 'Årskurs 4-6',
+    allowedOperations: ['multiplication', 'division', 'addition', 'subtraction', 'percentage'],
+    description: 'Större tal och procent.'
+  },
+  '7-9': {
+    label: 'Årskurs 7-9',
+    allowedOperations: ['multiplication', 'division', 'percentage', 'exponentiation', 'root', 'algebra'],
+    description: 'Avancerad matte för experter.'
+  }
+};

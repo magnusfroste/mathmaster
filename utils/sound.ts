@@ -21,9 +21,19 @@ const getAudioContext = () => {
   return audioCtx;
 };
 
-export const playSound = (type: 'match' | 'levelup' | 'incorrect', theme: ThemeId) => {
+export const playSound = (type: 'match' | 'levelup' | 'incorrect' | 'tick' | 'gameover', theme: ThemeId) => {
   const ctx = getAudioContext();
   if (!ctx) return;
+
+  if (type === 'tick') {
+    playTick(ctx);
+    return;
+  }
+
+  if (type === 'gameover') {
+    playGameOver(ctx);
+    return;
+  }
 
   if (type === 'incorrect') {
     playIncorrect(ctx);
@@ -39,12 +49,56 @@ export const playSound = (type: 'match' | 'levelup' | 'incorrect', theme: ThemeI
       if (type === 'match') playFootballMatch(ctx);
       else playFootballLevelUp(ctx);
       break;
+    case 'space':
+      if (type === 'match') playSpaceMatch(ctx);
+      else playSpaceLevelUp(ctx);
+      break;
     case 'classic':
     default:
       if (type === 'match') playClassicMatch(ctx);
       else playClassicLevelUp(ctx);
       break;
   }
+};
+
+const playTick = (ctx: AudioContext) => {
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  // High pitch short blip resembling a digital watch or metronome
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, t);
+  osc.frequency.exponentialRampToValueAtTime(1200, t + 0.05);
+  
+  gain.gain.setValueAtTime(0.05, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  
+  osc.start(t);
+  osc.stop(t + 0.05);
+};
+
+const playGameOver = (ctx: AudioContext) => {
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  // Descending "sad" slide
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(300, t);
+  osc.frequency.linearRampToValueAtTime(100, t + 0.8);
+  
+  gain.gain.setValueAtTime(0.2, t);
+  gain.gain.linearRampToValueAtTime(0, t + 0.8);
+  
+  osc.start(t);
+  osc.stop(t + 0.8);
 };
 
 const playIncorrect = (ctx: AudioContext) => {
@@ -288,4 +342,61 @@ const playFootballLevelUp = (ctx: AudioContext) => {
   playWhistlePart(t, 0.2);
   // Long peep
   playWhistlePart(t + 0.3, 0.8);
+};
+
+// --- Space Sounds (Sci-fi) ---
+
+const playSpaceMatch = (ctx: AudioContext) => {
+  // "Laser": Fast descending sawtooth
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(800, t);
+  osc.frequency.exponentialRampToValueAtTime(100, t + 0.15);
+  
+  gain.gain.setValueAtTime(0.1, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  
+  osc.start(t);
+  osc.stop(t + 0.15);
+};
+
+const playSpaceLevelUp = (ctx: AudioContext) => {
+  // "Warp Power Up": Rising FM sweep
+  const t = ctx.currentTime;
+  
+  const carrier = ctx.createOscillator();
+  const modulator = ctx.createOscillator();
+  const modGain = ctx.createGain();
+  const mainGain = ctx.createGain();
+  
+  carrier.connect(mainGain);
+  modulator.connect(modGain);
+  modGain.connect(carrier.frequency);
+  mainGain.connect(ctx.destination);
+  
+  carrier.type = 'sine';
+  carrier.frequency.setValueAtTime(200, t);
+  carrier.frequency.linearRampToValueAtTime(800, t + 1.0);
+  
+  modulator.type = 'square';
+  modulator.frequency.setValueAtTime(50, t);
+  modulator.frequency.linearRampToValueAtTime(10, t + 1.0);
+  
+  modGain.gain.setValueAtTime(100, t);
+  
+  mainGain.gain.setValueAtTime(0, t);
+  mainGain.gain.linearRampToValueAtTime(0.2, t + 0.5);
+  mainGain.gain.linearRampToValueAtTime(0, t + 1.2);
+  
+  carrier.start(t);
+  modulator.start(t);
+  
+  carrier.stop(t + 1.2);
+  modulator.stop(t + 1.2);
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Calculator, Snowflake, Trophy } from 'lucide-react';
+import { GripVertical, Calculator, Snowflake, Trophy, Rocket } from 'lucide-react';
 import { Theme, Operation } from '../types';
 
 interface DraggableCardProps {
@@ -28,6 +28,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
     switch (theme.id) {
       case 'hockey': return <Snowflake className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute rotate-12" />;
       case 'football': return <Trophy className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute -rotate-12" />;
+      case 'space': return <Rocket className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute -rotate-45" />;
       default: return <Calculator className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 text-black/10 absolute" />;
     }
   };
@@ -60,6 +61,18 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
            <span className="text-xl sm:text-2xl md:text-3xl mb-0.5 md:mb-1 drop-shadow-md leading-none whitespace-nowrap">x + {factorA}</span>
            <span className="text-lg sm:text-xl md:text-2xl opacity-80 leading-none py-0.5">=</span>
            <span className="text-3xl sm:text-4xl md:text-5xl mt-0.5 md:mt-1 drop-shadow-md leading-none">{factorB}</span>
+        </div>
+      );
+    }
+
+    if (operator === 'root') {
+      return (
+        <div className="flex items-center justify-center relative">
+           {/* Radical Symbol SVG roughly drawn or using text */}
+           <div className="flex items-start">
+             <span className="text-3xl sm:text-4xl md:text-5xl font-light leading-none mr-0.5 select-none">√</span>
+             <span className="text-4xl sm:text-5xl md:text-6xl font-bold drop-shadow-md leading-none border-t-2 border-white pt-1 mt-1.5">{factorA}</span>
+           </div>
         </div>
       );
     }
@@ -100,7 +113,7 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ id, factorA, facto
         <GripVertical size={16} className="text-white w-4 h-4 md:w-5 md:h-5" />
       </div>
       
-      <div className="relative flex flex-col items-center justify-center text-white font-bold select-none pointer-events-none z-10 w-full">
+      <div className="relative flex flex-col items-center justify-center text-white font-bold select-none pointer-events-none z-10 w-full px-1">
         {renderContent()}
       </div>
       

@@ -1,6 +1,8 @@
 
-export type ThemeId = 'classic' | 'hockey' | 'football';
-export type Operation = 'multiplication' | 'addition' | 'subtraction' | 'division' | 'percentage' | 'exponentiation' | 'algebra';
+export type ThemeId = 'classic' | 'hockey' | 'football' | 'space';
+export type Operation = 'multiplication' | 'addition' | 'subtraction' | 'division' | 'percentage' | 'exponentiation' | 'algebra' | 'root';
+
+export type GradeLevel = 'F' | '1' | '2' | '3' | '4-6' | '7-9';
 
 export interface Theme {
   id: ThemeId;
@@ -30,4 +32,4 @@ export interface GameState {
   timeLeft: number;
 }
 
-export type GamePhase = 'menu' | 'playing' | 'levelup' | 'gameover';
+export type GamePhase = 'grade_selection' | 'menu' | 'playing' | 'levelup' | 'gameover';

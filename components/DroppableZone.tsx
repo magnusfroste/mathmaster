@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Theme } from '../types';
-import { Check, Disc, Circle, BookOpen, XCircle, Star } from 'lucide-react';
+import { Check, Disc, Circle, BookOpen, XCircle, Star, Moon, Sun } from 'lucide-react';
 
 interface DroppableZoneProps {
   id: string;
@@ -28,6 +28,7 @@ export const DroppableZone: React.FC<DroppableZoneProps> = ({ id, value, theme, 
       switch (theme.id) {
         case 'hockey': return <Disc size={28} className="text-white animate-spin drop-shadow-md md:w-8 md:h-8" />; 
         case 'football': return <Circle size={28} className="text-white animate-bounce drop-shadow-md md:w-8 md:h-8" />;
+        case 'space': return <Sun size={28} className="text-yellow-300 animate-spin-slow drop-shadow-[0_0_15px_rgba(253,224,71,0.8)] md:w-8 md:h-8" />;
         default: return <Star size={28} className="text-yellow-300 fill-yellow-300 animate-pulse drop-shadow-md md:w-8 md:h-8" />;
       }
     }
@@ -39,6 +40,7 @@ export const DroppableZone: React.FC<DroppableZoneProps> = ({ id, value, theme, 
     switch (theme.id) {
       case 'hockey': return <Disc size={18} className={`md:w-5 md:h-5 text-white/40 ${isOver ? "animate-spin text-white" : ""}`} />; 
       case 'football': return <Circle size={18} className={`md:w-5 md:h-5 text-white/40 ${isOver ? "animate-bounce text-white" : ""}`} />; 
+      case 'space': return <Moon size={18} className={`md:w-5 md:h-5 text-white/40 ${isOver ? "text-white fill-white/20" : ""}`} />;
       default: return <BookOpen size={18} className={`md:w-5 md:h-5 text-white/40 ${isOver ? "text-white" : ""}`} />;
     }
   };
@@ -51,6 +53,7 @@ export const DroppableZone: React.FC<DroppableZoneProps> = ({ id, value, theme, 
     switch (theme.id) {
       case 'hockey': return 'Skjut';
       case 'football': return 'Passa';
+      case 'space': return 'Landa';
       default: return 'Släpp';
     }
   };
