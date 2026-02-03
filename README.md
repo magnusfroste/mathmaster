@@ -2,6 +2,8 @@
 
 A fun and interactive multiplication mastery game built with React. Learn multiplication through drag-and-drop gameplay with engaging themes and progression.
 
+**Published on [skolappar.com](https://www.skolappar.com) - Democratizing learning apps, built by vibe-coding parents who love helping their kids learn!**
+
 ## Features
 
 - **Drag & Drop Gameplay**: Match answers to multiplication problems
