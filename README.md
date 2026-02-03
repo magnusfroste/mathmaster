@@ -1,20 +1,59 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# MathMaster 🎮
 
-# Run and deploy your AI Studio app
+A fun and interactive multiplication mastery game built with React. Learn multiplication through drag-and-drop gameplay with engaging themes and progression.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1szQlZl8BWWmfV5inOV682kKwHUcJkCvK
+- **Drag & Drop Gameplay**: Match answers to multiplication problems
+- **Multiple Themes**: Classic, Space, Ocean, and more visual themes
+- **Progressive Difficulty**: Level-based system with increasing challenge
+- **Streak Tracking**: Build streaks for bonus points
+- **Coin System**: Earn coins for correct answers
+- **Confetti Celebrations**: Visual rewards for achievements
+- **Responsive Design**: Works on desktop and mobile
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:**  Node.js
+### Prerequisites
 
+- Node.js (v18 or higher)
+- npm or yarn
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Installation
+
+```bash
+npm install
+```
+
+### Run Locally
+
+```bash
+npm run dev
+```
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+## How to Play
+
+1. Choose a theme from the menu
+2. Select your operation (multiplication)
+3. Drag the correct answer to match the problem
+4. Build streaks to earn more points
+5. Progress through levels as you master multiplication
+
+## Tech Stack
+
+- **React 19** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **@dnd-kit** - Drag and drop functionality
+- **Lucide React** - Icons
+- **canvas-confetti** - Celebration effects
+
+## License
+
+MIT
