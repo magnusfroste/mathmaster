@@ -1,11 +1,36 @@
 <!DOCTYPE html>
 <html lang="sv">
   <head>
+    <!-- SELFHOST-HEAD -->
+    <title>MatteMästaren – träna multiplikation med dra-och-släpp</title>
+    <meta name="description" content="MatteMästaren är ett kostnadsfritt multiplikationsspel för barn: dra rätt svar till rätt plats, få poäng och träna gångertabellerna i din egen takt. Fungerar direkt i webbläsaren, ingen inloggning." />
+    <link rel="canonical" href="https://mathmaster.skolappar.com" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Skolappar" />
+    <meta name="theme-color" content="#111827" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Skolappar" />
+    <meta property="og:locale" content="sv_SE" />
+    <meta property="og:url" content="https://mathmaster.skolappar.com" />
+    <meta property="og:title" content="MatteMästaren – träna multiplikation med dra-och-släpp" />
+    <meta property="og:description" content="MatteMästaren är ett kostnadsfritt multiplikationsspel för barn: dra rätt svar till rätt plats, få poäng och träna gångertabellerna i din egen takt. Fungerar direkt i webbläsaren, ingen inloggning." />
+    <meta property="og:image" content="https://mathmaster.skolappar.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MatteMästaren" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MatteMästaren – träna multiplikation med dra-och-släpp" />
+    <meta name="twitter:description" content="MatteMästaren är ett kostnadsfritt multiplikationsspel för barn: dra rätt svar till rätt plats, få poäng och träna gångertabellerna i din egen takt. Fungerar direkt i webbläsaren, ingen inloggning." />
+    <meta name="twitter:image" content="https://mathmaster.skolappar.com/og.png" />
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "MatteMästaren", "description": "MatteMästaren är ett kostnadsfritt multiplikationsspel för barn: dra rätt svar till rätt plats, få poäng och träna gångertabellerna i din egen takt. Fungerar direkt i webbläsaren, ingen inloggning.", "url": "https://mathmaster.skolappar.com", "applicationCategory": "EducationalApplication", "applicationSubCategory": "Räknespel", "operatingSystem": "Webbläsare", "inLanguage": "sv-SE", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "SEK"}, "publisher": {"@type": "Organization", "name": "Skolappar", "url": "https://www.skolappar.com"}, "audience": {"@type": "EducationalAudience", "educationalRole": "student", "audienceType": "Låg- och mellanstadiet"}, "learningResourceType": "Multiplikation och gångertabeller"}</script>
+    <!-- /SELFHOST-HEAD -->
+
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Multiplikationsmästaren</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       /* Prevent scrolling on drag on touch devices */
       body {
@@ -36,21 +61,9 @@
         perspective: 1000px;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.2/",
-    "react": "https://esm.sh/react@^19.2.2",
-    "lucide-react": "https://esm.sh/lucide-react@^0.560.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.2/",
-    "@dnd-kit/utilities": "https://esm.sh/@dnd-kit/utilities@^3.2.2",
-    "@dnd-kit/core": "https://esm.sh/@dnd-kit/core@^6.3.1",
-    "canvas-confetti": "https://esm.sh/canvas-confetti@^1.9.4"
-  }
-}
-</script>
-</head>
+  </head>
   <body class="bg-gray-900 text-white overflow-hidden">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
