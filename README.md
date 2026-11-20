@@ -58,8 +58,6 @@ components/Confetti.tsx      konfetti
 deploy/nginx.conf            nginx-konfiguration
 ```
 
-`src/App.tsx` är en äldre variant med årskursval som inte byggs in i appen.
-
 ## Licens
 
 MIT – se [LICENSE](LICENSE).
