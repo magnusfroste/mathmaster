@@ -81,7 +81,7 @@
   #startskarm {
     position: fixed; inset: 0; z-index: 2147483000;
     background: #faf7f2; color: #14181f;
-    font-family: 'Fredoka', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: "Fredoka", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     display: grid; place-items: center;
     padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
@@ -158,6 +158,8 @@
 <script>
   (function () {
     var s = document.getElementById('startskarm');
+    var path = location.pathname.replace(/index[.]html$/, '');
+    if (path !== '/' && path !== '') { s.remove(); return; }
     var d = document.documentElement, b = document.body;
     var prev = [d.style.overflow, b.style.overflow];
     d.style.overflow = 'hidden'; b.style.overflow = 'hidden';
@@ -166,6 +168,8 @@
       s.classList.add('dold');
       s.setAttribute('aria-hidden', 'true');
       setTimeout(function () { s.remove(); }, 240);
+      var to = s.getAttribute('data-play-href');
+      if (to && to !== '/' && to !== location.pathname) { location.href = to; }
       document.dispatchEvent(new CustomEvent('startskarm:spela'));
     });
   })();
