@@ -5,6 +5,8 @@ innan tiden tar slut – multiplikation som standard, men också andra räknesä
 
 **Spela:** https://mathmaster.skolappar.com · En del av [Skolappar](https://www.skolappar.com) – pedagogiska appar av föräldrar · öppen källkod (MIT)
 
+![MatteMästaren](public/kort.png)
+
 Började som ett Google AI Studio-projekt och körs nu fristående.
 
 ## Vad du kan göra
