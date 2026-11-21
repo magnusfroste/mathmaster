@@ -487,7 +487,7 @@ const App: React.FC = () => {
                 <X size={24} />
               </button>
 
-              <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
+              <div className="absolute top-0 left-0 w-full h-full bg-[url('/stardust.png')] opacity-20"></div>
               
               <div className="relative z-10">
                 <div className="inline-block p-4 rounded-full bg-yellow-400 mb-6 shadow-[0_0_50px_rgba(250,204,21,0.5)] animate-bounce">
