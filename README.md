@@ -1,61 +1,65 @@
-# MathMaster 🎮
+# MatteMästaren
 
-A fun and interactive multiplication mastery game built with React. Learn multiplication through drag-and-drop gameplay with engaging themes and progression.
+Räkneträning med dra och släpp för låg- och mellanstadiet. Barnet drar svarskorten till rätt tal
+innan tiden tar slut – multiplikation som standard, men också andra räknesätt.
 
-**Published on [skolappar.com](https://www.skolappar.com) - Democratizing learning apps, built by vibe-coding parents who love helping their kids learn!**
+**Spela:** https://mathmaster.skolappar.com · En del av [Skolappar](https://www.skolappar.com) – pedagogiska appar av föräldrar · öppen källkod (MIT)
 
-## Features
+![MatteMästaren](public/kort.png)
 
-- **Drag & Drop Gameplay**: Match answers to multiplication problems
-- **Multiple Themes**: Classic, Space, Ocean, and more visual themes
-- **Progressive Difficulty**: Level-based system with increasing challenge
-- **Streak Tracking**: Build streaks for bonus points
-- **Coin System**: Earn coins for correct answers
-- **Confetti Celebrations**: Visual rewards for achievements
-- **Responsive Design**: Works on desktop and mobile
+Började som ett Google AI Studio-projekt och körs nu fristående.
 
-## Getting Started
+## Vad du kan göra
 
-### Prerequisites
+- **Åtta räknesätt**: multiplikation, addition, subtraktion, division, procent, potenser,
+  kvadratrot och algebra.
+- **Dra och släpp** svaret till rätt uppgift, med finger eller mus.
+- **Tio nivåer** med fler uppgifter, större tal och kortare tid.
+- **Nedräkning**: fel svar kostar fem sekunder och nollställer sviten.
+- **Svit (streak)** som ger extrapoäng, och **mynt** som samlas mellan omgångarna.
+- **Fyra teman** med egna färger och ljud: Klassisk Matte, Hockeymatch, Fotbollsplan och
+  Rymdäventyr.
+- Konfetti när en nivå är klar; ljuden skapas i webbläsaren (Web Audio).
 
-- Node.js (v18 or higher)
-- npm or yarn
-
-### Installation
+## Kom igång
 
 ```bash
 npm install
+npm run dev      # utvecklingsserver på port 3000
+npm run build    # produktionsbygge till dist/
+npm run preview  # förhandsgranska bygget
 ```
 
-### Run Locally
+Docker-bygget använder Node 22.
+
+## Docker
 
 ```bash
-npm run dev
+docker build -t mathmaster .
+docker run --rm -p 8080:8080 mathmaster
 ```
 
-### Build for Production
+Servern ligger bakom nginx med `deploy/nginx.conf`.
 
-```bash
-npm run build
+## Integritet
+
+- Ingen inloggning, inga kakor, ingen analys, inga AI-tjänster.
+- Inga anrop till externa servrar. Typsnittet Fredoka ligger i `public/fonts/`.
+- Det enda som sparas är antalet mynt, i `localStorage` under `mm_coins`.
+
+## Struktur
+
+```
+App.tsx                      meny, spel, nivåer, poäng och mynt
+constants.ts                 teman och nivåer
+utils/mathLogic.ts           skapar uppgifterna för varje räknesätt
+utils/sound.ts               ljud per tema
+components/DraggableCard.tsx svarskort
+components/DroppableZone.tsx uppgift att släppa svaret på
+components/Confetti.tsx      konfetti
+deploy/nginx.conf            nginx-konfiguration
 ```
 
-## How to Play
+## Licens
 
-1. Choose a theme from the menu
-2. Select your operation (multiplication)
-3. Drag the correct answer to match the problem
-4. Build streaks to earn more points
-5. Progress through levels as you master multiplication
-
-## Tech Stack
-
-- **React 19** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **@dnd-kit** - Drag and drop functionality
-- **Lucide React** - Icons
-- **canvas-confetti** - Celebration effects
-
-## License
-
-MIT
+MIT – se [LICENSE](LICENSE).
