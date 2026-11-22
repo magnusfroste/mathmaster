@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* ---- iPad landskap (768 px hög): scenariovalet + STARTA ska rymmas ------ */
+@media (min-width: 820px) and (max-height: 860px) {
+  .min-h-screen { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+  .min-h-screen > div { zoom: 0.85; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .min-h-screen > div > * + * { margin-top: 0.85rem !important; }
+  .min-h-screen h1 { font-size: 2.4rem; line-height: 1.05; }
+}
