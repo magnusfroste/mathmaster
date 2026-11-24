@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -17,6 +17,7 @@ import { DroppableZone } from './components/DroppableZone';
 import { triggerConfetti } from './components/Confetti';
 import { playSound } from './utils/sound';
 import { PROBLEM_COUNTS, generateProblems } from './utils/mathLogic';
+import { report } from './skolappar';
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(THEMES.classic);
@@ -29,6 +30,14 @@ const App: React.FC = () => {
   const [shakeCardId, setShakeCardId] = useState<string | null>(null);
   const [shakeZoneValue, setShakeZoneValue] = useState<number | null>(null);
   const [streakPop, setStreakPop] = useState(false);
+  // Per round: how many cards there were and how many wrong drops, for skolappar's round result
+  const round = useRef({ total: 0, wrong: 0 });
+
+  const beginRound = (level: number, count: number) => {
+    round.current = { total: count, wrong: 0 };
+    report('round_start');
+    report('level', level);
+  };
   
   const totalLevels = LEVELS.length;
   const totalUniqueProblems = Object.values(PROBLEM_COUNTS).reduce((a, b) => a + b, 0);
@@ -89,8 +98,17 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [phase, stats.timeLeft, theme.id]);
 
+  // A round ends: cleared (share of drops that were right) or out of time (share of cards solved)
+  useEffect(() => {
+    const { total, wrong } = round.current;
+    if (!total) return;
+    if (phase === 'levelup') report('round_done', Math.round((total / (total + wrong)) * 100));
+    if (phase === 'gameover') report('round_done', Math.round(((total - problems.length) / total) * 100));
+  }, [phase]);
+
   const startGame = () => {
     const { problems: newProblems, answers: newAnswers } = generateProblems(1, LEVELS[0].count, selectedOperation);
+    beginRound(1, newProblems.length);
     setProblems(newProblems);
     setAnswers(newAnswers);
     setStats({
@@ -106,6 +124,7 @@ const App: React.FC = () => {
   const retryLevel = () => {
     const config = LEVELS[Math.min(stats.level - 1, LEVELS.length - 1)];
     const { problems: newProblems, answers: newAnswers } = generateProblems(stats.level, config.count, selectedOperation);
+    beginRound(stats.level, newProblems.length);
     setProblems(newProblems);
     setAnswers(newAnswers);
     setStats(prev => ({
@@ -120,6 +139,7 @@ const App: React.FC = () => {
     const nextLvl = stats.level + 1;
     const config = LEVELS[Math.min(nextLvl - 1, LEVELS.length - 1)];
     const { problems: newProblems, answers: newAnswers } = generateProblems(nextLvl, config.count, selectedOperation);
+    beginRound(nextLvl, newProblems.length);
     
     setProblems(newProblems);
     setAnswers(newAnswers);
@@ -188,6 +208,8 @@ const App: React.FC = () => {
       }
     } else {
       playSound('incorrect', theme.id);
+      round.current.wrong++;
+      report('hint');
       
       setShakeCardId(problemId);
       setShakeZoneValue(droppedOnAnswer);
