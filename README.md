@@ -3,7 +3,7 @@
 Räkneträning med dra och släpp för låg- och mellanstadiet. Barnet drar svarskorten till rätt tal
 innan tiden tar slut – multiplikation som standard, men också andra räknesätt.
 
-**Spela:** https://mathmaster.skolappar.com · En del av [Skolappar](https://www.skolappar.com) – pedagogiska appar av föräldrar · öppen källkod (MIT)
+**Spela:** https://mathmaster.skolappar.org · En del av [Skolappar](https://www.skolappar.org) – pedagogiska appar av föräldrar · öppen källkod (MIT)
 
 ![MatteMästaren](public/kort.png)
 

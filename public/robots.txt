@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mathmaster.skolappar.com/sitemap.xml
+Sitemap: https://mathmaster.skolappar.org/sitemap.xml
